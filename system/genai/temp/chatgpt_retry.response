@@ -1,0 +1,43 @@
+{
+    "models": [
+        {
+            "classname": "Walker",
+            "code": "class Walker(Base):\n    \"\"\"description: Represents a registered dog walker who can set availability and accept walk requests.\"\"\"\n    __tablename__ = 'walker'\n\n    id = Column(Integer, primary_key=True, autoincrement=True)\n    first_name = Column(String, nullable=False)\n    last_name = Column(String, nullable=False)\n    postal_code = Column(String, nullable=False)\n    phone = Column(String, nullable=False)\n    email = Column(String, nullable=False)\n    max_dogs_per_walk = Column(Integer, nullable=False)\n    small_dog_price = Column(Float, nullable=False)\n    medium_dog_price = Column(Float, nullable=False)\n    large_dog_price = Column(Float, nullable=False)\n    available_days = Column(String, nullable=False)  # \"Mon,Tues,...\"\n    available_times = Column(String, nullable=False)  # \"morning,afternoon\"\n    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = Column(String, nullable=False)",
+            "description": "Represents a registered dog walker who can set availability and accept walk requests.",
+            "name": "Walker"
+        },
+        {
+            "classname": "Owner",
+            "code": "class Owner(Base):\n    \"\"\"description: Represents a dog owner who can register dogs and request walks.\"\"\"\n    __tablename__ = 'owner'\n\n    id = Column(Integer, primary_key=True, autoincrement=True)\n    name = Column(String, nullable=False)\n    address = Column(String, nullable=False)\n    phone = Column(String, nullable=False)\n    email = Column(String, nullable=False)\n    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = Column(String, nullable=False)",
+            "description": "Represents a dog owner who can register dogs and request walks.",
+            "name": "Owner"
+        },
+        {
+            "classname": "Dog",
+            "code": "class Dog(Base):\n    \"\"\"description: Represents a dog belonging to an owner, with details about their breed and size.\"\"\"\n    __tablename__ = 'dog'\n\n    id = Column(Integer, primary_key=True, autoincrement=True)\n    owner_id = Column(Integer, ForeignKey('owner.id'), nullable=False)\n    name = Column(String, nullable=False)\n    breed = Column(String, nullable=False)\n    size = Column(String, nullable=False)  # small, medium, large\n    notes = Column(String)\n    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = Column(String, nullable=False)",
+            "description": "Represents a dog belonging to an owner, with details about their breed and size.",
+            "name": "Dog"
+        },
+        {
+            "classname": "WalkRequest",
+            "code": "class WalkRequest(Base):\n    \"\"\"description: Represents a request for a walk made by an owner for their dogs, matched to available walkers.\"\"\"\n    __tablename__ = 'walk_request'\n\n    id = Column(Integer, primary_key=True, autoincrement=True)\n    owner_id = Column(Integer, ForeignKey('owner.id'), nullable=False)\n    walker_id = Column(Integer, ForeignKey('walker.id'), nullable=False)\n    scheduled_date = Column(DateTime, nullable=False)\n    time_slot = Column(String, nullable=False)  # morning, afternoon\n    status = Column(String, nullable=False, default='pending')  # pending, confirmed, rejected\n    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = Column(String, nullable=False)",
+            "description": "Represents a request for a walk made by an owner for their dogs, matched to available walkers.",
+            "name": "WalkRequest"
+        },
+        {
+            "classname": "Payment",
+            "code": "class Payment(Base):\n    \"\"\"description: Represents payment records for completed dog walks.\"\"\"\n    __tablename__ = 'payment'\n\n    id = Column(Integer, primary_key=True, autoincrement=True)\n    walk_request_id = Column(Integer, ForeignKey('walk_request.id'), nullable=False)\n    amount = Column(Float, nullable=False)\n    payment_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    created_date = Column(DateTime, default=datetime.utcnow, nullable=False)\n    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = Column(String, nullable=False)",
+            "description": "Represents payment records for completed dog walks.",
+            "name": "Payment"
+        }
+    ],
+    "rules": [
+        {
+            "name": "Walker Pricing Constraint",
+            "description": "Ensures that the walk pricing set by the walker is within the specified range.",
+            "code": "Rule.constraint(validate=Walker,\n                  as_condition=lambda row: 10 <= row.small_dog_price <= 50 and 10 <= row.medium_dog_price <= 50 and 10 <= row.large_dog_price <= 50,\n                  error_msg=\"Walk price per dog size must be between $10 and $50\")"
+        }
+    ],
+    "test_data": "from datetime import date\n\nwalker_1 = Walker(\n    first_name='John',\n    last_name='Doe',\n    postal_code='12345',\n    phone='123-456-7890',\n    email='john.doe@example.com',\n    max_dogs_per_walk=5,\n    small_dog_price=15.00,\n    medium_dog_price=20.00,\n    large_dog_price=25.00,\n    available_days='Mon,Tues,Wed',\n    available_times='morning,afternoon',\n    created_by='system'\n)\n\nowner_1 = Owner(\n    name='Jane Smith',\n    address='456 Elm St',\n    phone='987-654-3210',\n    email='jane.smith@example.com',\n    created_by='system'\n)\n\ndog_1 = Dog(\n    owner_id=1,\n    name='Buddy',\n    breed='Golden Retriever',\n    size='large',\n    notes='Very friendly',\n    created_by='system'\n)\n\ndog_2 = Dog(\n    owner_id=1,\n    name='Bella',\n    breed='Beagle',\n    size='medium',\n    notes='Loves treats',\n    created_by='system'\n)\n\nwalk_request_1 = WalkRequest(\n    owner_id=1,\n    walker_id=1,\n    scheduled_date=date(2023, 10, 21),\n    time_slot='morning',\n    status='pending',\n    created_by='system'\n)\n\npayment_1 = Payment(\n    walk_request_id=1,\n    amount=35.00,\n    payment_date=date(2023, 10, 21),\n    created_by='system'\n)",
+    "name": "DogWalkingBusiness"
+}
